@@ -3,88 +3,1244 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Drive Folder Downloader</title>
-<meta name="description" content="Paste a public Google Drive folder link and download the whole folder as one archive — subfolders included, no 2 GB split.">
-<link rel="stylesheet" href="src/styles.css">
+<title>Download a Whole Google Drive Folder at Once — No Zip Splits</title>
+<meta name="description" content="Download an entire Google Drive folder at once, straight to disk with its structure intact. No 2GB zip splits to piece together, no sign-in. Runs in your browser.">
+<meta name="keywords" content="download google drive folder, google drive folder downloader, download entire google drive folder, google drive 2gb zip split, download whole google drive folder at once, gdrive folder downloader">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/">
+<meta property="og:title" content="Download a Whole Google Drive Folder at Once — No Zip Splits">
+<meta property="og:description" content="Download an entire Google Drive folder at once, straight to disk with its structure intact. No 2GB zip splits to piece together, no sign-in.">
+<meta property="og:image" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/og-image.png">
+<meta property="og:site_name" content="GDrive Whole Folder Downloader">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Download a Whole Google Drive Folder at Once — No Zip Splits">
+<meta name="twitter:description" content="Download an entire Google Drive folder at once, straight to disk with its structure intact. No 2GB zip splits to piece together, no sign-in.">
+<meta name="twitter:image" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/og-image.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "GDrive Whole Folder Downloader",
+  "description": "Download an entire public Google Drive folder at once, straight to disk with its folder structure intact, without Google's 2GB zip splits.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Chrome, Edge, Opera",
+  "url": "https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<style>
+:root {
+  --ink: #16181d;
+  --soft: #5f6672;
+  --line: #e4e6ea;
+  --accent: #0b57d0;
+  --bad: #b3261e;
+  --ok: #156b3f;
+}
+* { box-sizing: border-box; }
+html { background: #fff; }
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--ink);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 680px; margin: 0 auto; padding: 56px 20px 80px; }
+
+h1 { font-size: 1.75rem; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 24px; }
+h2 { font-size: 1rem; margin: 0 0 12px; }
+
+a { color: var(--accent); }
+
+label { display: block; }
+.lbl { font-size: .85rem; font-weight: 600; margin-bottom: 6px; display: block; }
+
+input[type=text], input[type=number], select {
+  font: inherit; color: var(--ink); background: #fff;
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%;
+}
+input[type=number] { width: 72px; }
+select { width: auto; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--line); background: #fff; color: var(--ink);
+  border-radius: 6px; padding: 10px 16px;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.link {
+  border: 0; background: none; padding: 0; color: var(--accent);
+  font-weight: 400; text-decoration: underline;
+}
+
+.row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.row > label { flex: 1 1 280px; }
+
+.points { margin: 28px 0 0; padding: 0 0 0 18px; color: var(--soft); font-size: .9rem; }
+.points li { margin-bottom: 4px; }
+.limits { margin: 18px 0 0; color: var(--soft); font-size: .85rem; }
+
+.notice { margin: 20px 0 0; font-size: .9rem; padding: 10px 12px; border-left: 3px solid var(--line); }
+.notice.bad { border-color: var(--bad); color: var(--bad); }
+.notice.warn { border-color: #b58100; color: #7a5800; }
+
+details { margin-top: 24px; }
+summary { cursor: pointer; font-size: .85rem; color: var(--soft); }
+details .body { padding-top: 12px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 10px; }
+.check input { margin: 0; }
+
+section { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--line); }
+section[hidden] { display: none; }
+
+.counts { font-size: .9rem; color: var(--soft); margin: 0 0 16px; }
+.counts strong { color: var(--ink); }
+
+.tree { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: .88rem; }
+.tree ul { list-style: none; margin: 0; padding-left: 18px; }
+.tree > ul { padding-left: 0; }
+.tree li { margin: 1px 0; }
+.tree details > summary { color: var(--ink); font-size: .88rem; }
+.tree .file { color: var(--soft); padding-left: 20px; }
+.tree .file.first { margin-top: 10px; }
+.tree .size { color: var(--soft); font-variant-numeric: tabular-nums; }
+.tree .skip { color: #7a5800; }
+.tree input { margin-right: 6px; }
+
+.settings { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin: 20px 0; }
+.settings label { font-size: .85rem; }
+.settings .lbl { font-weight: 400; color: var(--soft); }
+
+.dest { margin: 0 0 16px; font-size: .85rem; color: var(--soft); }
+
+.bar { height: 6px; background: #f1f2f4; border-radius: 99px; overflow: hidden; margin: 4px 0 10px; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+.meta { font-size: .9rem; font-variant-numeric: tabular-nums; margin: 0 0 4px; }
+.sub { font-size: .85rem; color: var(--soft); margin: 0; }
+
+.inflight { margin: 16px 0 0; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.inflight div { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; color: var(--soft); }
+.inflight span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.controls { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+.report { font-size: .9rem; }
+.report ul { padding-left: 18px; color: var(--soft); max-height: 240px; overflow: auto; }
+.report li { margin-bottom: 3px; overflow-wrap: anywhere; }
+
+.log {
+  margin-top: 20px; max-height: 220px; overflow: auto; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 6px;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--soft);
+}
+.log div { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
+</style>
 </head>
 <body>
-<main class="wrap">
+<main>
 
-  <header class="head">
-    <h1>Download a whole Drive folder</h1>
-    <p class="lede">
-      Paste a Google Drive folder shared as <strong>“Anyone with the link”</strong>
-      and get everything in one archive — subfolders and all, with no 2&nbsp;GB
-      split and no clicking through pages.
-    </p>
-  </header>
+  <h1>Download a whole Google Drive folder at once</h1>
 
-  <section class="card">
-    <form id="scan-form" autocomplete="off">
-      <label class="field">
-        <span class="field-label">Drive folder link</span>
-        <input id="folder-link" type="text" inputmode="url" spellcheck="false"
-               placeholder="https://drive.google.com/drive/folders/…" required>
+  <form id="scan-form">
+    <div class="row">
+      <label>
+        <span class="lbl">Shared folder link</span>
+        <input id="link" type="text" spellcheck="false" autocomplete="off"
+               placeholder="https://drive.google.com/drive/folders/..." required>
       </label>
+      <button id="scan-btn" class="primary" type="submit">Scan</button>
+    </div>
+  </form>
 
-      <label class="field" id="key-row" hidden>
-        <span class="field-label">Google API key</span>
-        <input id="api-key" type="text" spellcheck="false" placeholder="AIza…">
-        <small class="hint">
-          Needs the Drive API enabled. Stored only in this browser, never sent anywhere but Google.
-        </small>
+  <p id="gate" class="notice bad" hidden></p>
+  <p id="unconfigured" class="notice warn" hidden></p>
+  <p id="scan-msg" class="notice" hidden></p>
+
+  <ul class="points">
+    <li>Runs entirely in your browser. Files go straight from Google to your disk.</li>
+    <li>Nothing is stored. No sign-in, no account, no link history, no analytics.</li>
+    <li>The whole folder in one go, structure intact — no 2GB zips to piece together.</li>
+    <li>Downloads several files at once, so it finishes faster.</li>
+    <li>Stops halfway? Run it again and it picks up where it left off.</li>
+  </ul>
+
+  <p class="limits">
+    Works on folders shared "anyone with the link". Needs Chrome, Edge, or Opera.
+    Google Docs, Sheets and Slides are converted to Office files.
+  </p>
+
+  <details id="key-details">
+    <summary>Use your own API key</summary>
+    <div class="body">
+      <label>
+        <input id="user-key" type="text" spellcheck="false" autocomplete="off">
       </label>
-
-      <button id="scan-btn" class="btn btn-primary" type="submit">Scan folder</button>
-      <p id="scan-status" class="status" role="status" aria-live="polite"></p>
-    </form>
-  </section>
-
-  <section class="card" id="summary" hidden>
-    <div id="stats" class="stats"></div>
-    <div id="warnings" class="warnings"></div>
-    <div class="actions">
-      <button id="start-btn" class="btn btn-primary" type="button">Download as one ZIP</button>
-      <button id="alt-btn" class="btn" type="button" hidden>Fetch files one by one</button>
+      <label class="check">
+        <input id="remember-key" type="checkbox">
+        <span>Remember in this browser</span>
+      </label>
     </div>
-    <p id="mode-note" class="hint"></p>
-  </section>
+  </details>
 
-  <section class="card" id="progress" hidden>
-    <div class="progress-head">
-      <h2 id="progress-head">Downloading</h2>
-      <button id="cancel-btn" class="btn btn-quiet" type="button">Cancel</button>
+  <section id="review" hidden>
+    <h2>Review</h2>
+    <p class="counts" id="counts"></p>
+    <div class="tree" id="tree"></div>
+
+    <div class="settings">
+      <label>
+        <span class="lbl">At once</span>
+        <input id="concurrency" type="number" min="1" max="10" step="1" value="5">
+      </label>
+      <label>
+        <span class="lbl">Docs, Sheets, Slides as</span>
+        <select id="export-format">
+          <option value="office">Office formats</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </label>
+      <label class="check">
+        <input id="verify" type="checkbox">
+        <span>Verify checksums after writing</span>
+      </label>
     </div>
-    <div id="bar" class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <div id="bar-fill" class="bar-fill"></div>
+
+    <p class="dest" id="dest-note"></p>
+    <button id="download-btn" class="primary" type="button">Choose destination and download</button>
+  </section>
+
+  <section id="progress" hidden>
+    <h2 id="progress-title">Downloading</h2>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <p class="meta" id="progress-meta"></p>
+    <p class="sub" id="progress-sub"></p>
+    <div class="inflight" id="inflight"></div>
+    <div class="controls">
+      <button id="pause-btn" type="button">Pause</button>
+      <button id="cancel-btn" type="button">Cancel</button>
     </div>
-    <p id="progress-meta" class="meta"></p>
-    <p id="current-file" class="current"></p>
-    <div id="log" class="log" aria-live="polite"></div>
   </section>
 
-  <section class="card" id="result" hidden></section>
-
-  <section class="card support" id="support" hidden>
-    <h2>Free to use</h2>
-    <p class="hint">
-      This runs entirely in your browser and costs nothing to use. Donations keep
-      the API quota topped up.
-    </p>
+  <section id="summary" hidden>
+    <h2 id="summary-title">Finished</h2>
+    <div class="report" id="report"></div>
+    <div class="controls">
+      <button id="retry-btn" class="primary" type="button" hidden>Retry failed</button>
+      <button id="report-btn" type="button">Download report</button>
+    </div>
   </section>
 
-  <footer class="foot">
-    <p>
-      Your files never touch a server of ours — the browser talks straight to
-      Google and writes the archive to your disk.
-    </p>
-    <p>
-      <a href="https://github.com/reddotconsultancy/gdrive-whole-folder-downloader">Source on GitHub</a>
-      · MIT licensed
-    </p>
+  <section id="log-section" hidden>
+    <h2>Debug log</h2>
+    <div class="log" id="log"></div>
+  </section>
+
+  <footer>
+    <a href="https://github.com/reddotconsultancy/gdrive-whole-folder-downloader">Source on GitHub</a> · MIT
   </footer>
 
 </main>
-<script type="module" src="src/app.js"></script>
+<script>
+"use strict";
+
+/* ===========================================================================
+   CONFIGURATION — this is the only line you need to edit.
+   Create a Google API key (see README), enable the Drive API, and paste it
+   between the quotes. Restrict the key to the Drive API and to your own
+   domain as an HTTP referrer before publishing.
+   =========================================================================== */
+const API_KEY = "PASTE_YOUR_API_KEY_HERE";
+/* ========================================================================= */
+
+const KEY_PLACEHOLDER = "PASTE_YOUR_API_KEY_HERE";
+const API = "https://www.googleapis.com/drive/v3";
+const STORE = "gwfd.userKey";
+
+const QS = new URLSearchParams(location.search);
+const DEBUG = QS.get("debug") === "1";
+const DRYRUN = QS.get("dryrun") === "1";
+
+const FOLDER_MIME = "application/vnd.google-apps.folder";
+const SHORTCUT_MIME = "application/vnd.google-apps.shortcut";
+
+/* Google-native types carry no bytes; they have to be exported. */
+const EXPORT_OFFICE = {
+  "application/vnd.google-apps.document": ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx"],
+  "application/vnd.google-apps.spreadsheet": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"],
+  "application/vnd.google-apps.presentation": ["application/vnd.openxmlformats-officedocument.presentationml.presentation", ".pptx"],
+  "application/vnd.google-apps.drawing": ["image/png", ".png"],
+  "application/vnd.google-apps.script": ["application/vnd.google-apps.script+json", ".json"],
+};
+const EXPORT_PDF = {
+  "application/vnd.google-apps.document": ["application/pdf", ".pdf"],
+  "application/vnd.google-apps.spreadsheet": ["application/pdf", ".pdf"],
+  "application/vnd.google-apps.presentation": ["application/pdf", ".pdf"],
+  "application/vnd.google-apps.drawing": ["application/pdf", ".pdf"],
+  "application/vnd.google-apps.script": ["application/vnd.google-apps.script+json", ".json"],
+};
+const NO_EXPORT = {
+  "application/vnd.google-apps.form": "Google Form",
+  "application/vnd.google-apps.site": "Google Site",
+  "application/vnd.google-apps.jam": "Jamboard file",
+  "application/vnd.google-apps.map": "Google My Map",
+  "application/vnd.google-apps.fusiontable": "Fusion Table",
+};
+
+const $ = (id) => document.getElementById(id);
+const UI = {};
+for (const id of ["scan-form","link","scan-btn","gate","unconfigured","scan-msg","key-details","user-key",
+  "remember-key","review","counts","tree","concurrency","export-format","verify","dest-note","download-btn",
+  "progress","progress-title","bar-fill","progress-meta","progress-sub","inflight","pause-btn","cancel-btn",
+  "summary","summary-title","report","retry-btn","report-btn","log-section","log"]) {
+  UI[id] = $(id);
+}
+
+const S = {
+  root: null,          // root tree node
+  rootName: "",
+  files: [],           // every downloadable file found
+  dir: null,           // destination FileSystemDirectoryHandle
+  dirCache: new Map(),
+  limit: 5,
+  inFlight: 0,
+  queue: [],
+  paused: false,
+  cancelled: false,
+  abort: null,
+  schedule: null,
+  waiters: [],
+  bytesDone: 0,
+  bytesTotal: 0,
+  results: [],
+  active: new Map(),
+  rateLimitHits: 0,
+};
+
+/* ---------------------------------------------------------------- logging */
+
+function log(msg) {
+  if (!DEBUG) return;
+  console.log("[gwfd]", msg);
+  const d = document.createElement("div");
+  d.textContent = new Date().toISOString().slice(11, 23) + "  " + msg;
+  UI.log.prepend(d);
+  while (UI.log.childElementCount > 500) UI.log.lastElementChild.remove();
+}
+
+/* ------------------------------------------------------------ small utils */
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function backoff(attempt) {
+  const cap = Math.min(30000, 600 * Math.pow(2, attempt));
+  return cap / 2 + Math.random() * (cap / 2);
+}
+
+function bytes(n) {
+  if (n == null || isNaN(n)) return "unknown size";
+  const u = ["B", "KB", "MB", "GB", "TB"];
+  let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return (n < 10 && i > 0 ? n.toFixed(1) : Math.round(n)) + " " + u[i];
+}
+
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
+/* Filesystem-safe single path segment. */
+function safeName(name) {
+  let s = String(name == null ? "" : name)
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/[/\\:*?"<>|]/g, "_")
+    .replace(/[. ]+$/, "")
+    .trim();
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i.test(s)) s = "_" + s;
+  if (!s) s = "unnamed";
+  if (s.length > 180) {
+    const dot = s.lastIndexOf(".");
+    const ext = dot > 0 && s.length - dot <= 12 ? s.slice(dot) : "";
+    s = s.slice(0, 180 - ext.length) + ext;
+  }
+  return s;
+}
+
+/* Drive allows duplicate names in one folder; filesystems do not. */
+function dedupe(name, used) {
+  const lower = name.toLowerCase();
+  if (!used.has(lower)) { used.add(lower); return name; }
+  const dot = name.lastIndexOf(".");
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  for (let i = 2; ; i++) {
+    const candidate = stem + " (" + i + ")" + ext;
+    if (!used.has(candidate.toLowerCase())) { used.add(candidate.toLowerCase()); return candidate; }
+  }
+}
+
+/* ----------------------------------------------------------- link parsing */
+
+function parseFolderId(input) {
+  const s = String(input || "").trim();
+  if (!s) return null;
+  const patterns = [
+    /\/folders\/([-\w]{10,})/,          // /drive/folders/ID and /drive/u/0/folders/ID
+    /[?&]id=([-\w]{10,})/,              // ?id=ID and open?id=ID
+    /\/file\/d\/([-\w]{10,})/,
+    /\/d\/([-\w]{10,})/,
+  ];
+  for (const re of patterns) {
+    const m = s.match(re);
+    if (m) return m[1];
+  }
+  if (/^[-\w]{10,}$/.test(s)) return s;
+  return null;
+}
+
+/* -------------------------------------------------------------- API layer */
+
+function activeKey() {
+  const own = UI["user-key"].value.trim();
+  return own || API_KEY;
+}
+
+function isConfigured() {
+  const k = activeKey();
+  return Boolean(k) && k !== KEY_PLACEHOLDER;
+}
+
+class DriveError extends Error {
+  constructor(status, reason, message) {
+    super(message || ("HTTP " + status + (reason ? " (" + reason + ")" : "")));
+    this.status = status;
+    this.reason = reason;
+  }
+}
+
+const RATE_REASONS = new Set(["rateLimitExceeded", "userRateLimitExceeded", "sharingRateLimitExceeded"]);
+
+function isRateLimited(err) {
+  return err instanceof DriveError && (err.status === 429 || (err.status === 403 && RATE_REASONS.has(err.reason)));
+}
+function isTransient(err) {
+  if (err instanceof DriveError) return err.status >= 500 || isRateLimited(err);
+  return err && err.name !== "AbortError"; // network-level failure
+}
+
+async function toDriveError(res) {
+  let reason, message;
+  try {
+    const body = await res.clone().json();
+    if (body && body.error) {
+      message = body.error.message;
+      if (body.error.errors && body.error.errors[0]) reason = body.error.errors[0].reason;
+    }
+  } catch (e) { /* non-JSON body */ }
+  return new DriveError(res.status, reason, message);
+}
+
+/** Plain-English explanation for the failures that actually happen. */
+function explain(err) {
+  if (!(err instanceof DriveError)) {
+    if (err && err.name === "AbortError") return "Cancelled.";
+    return (err && err.message) || String(err);
+  }
+  if (err.status === 403 && err.reason === "downloadQuotaExceeded")
+    return "Google has temporarily capped downloads on this file because too many people have downloaded it. Usually clears within a day.";
+  if (err.status === 403 && err.reason === "cannotDownloadAbusiveFile")
+    return "Google flagged this file as abusive and refused to serve it.";
+  if (isRateLimited(err)) return "Google rate limit. Backing off and retrying.";
+  if (err.status === 404) return "That file is no longer shared, or the link isn't public.";
+  if (err.status === 401 || (err.status === 400 && /API key/i.test(err.message || "")) ||
+      (err.status === 403 && /API key|not valid|blocked/i.test(err.message || "")))
+    return "The API key was rejected. Check that it is correct, that the Drive API is enabled for it, and that this domain is allowed as a referrer.";
+  if (err.status === 403) return "Access denied by Google" + (err.message ? ": " + err.message : "");
+  return err.message;
+}
+
+function url(path, query) {
+  const q = new URLSearchParams(Object.assign({ key: activeKey() }, query));
+  return API + path + "?" + q.toString();
+}
+
+async function apiJson(path, query, attempts) {
+  const max = attempts == null ? 6 : attempts;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url(path, query), { signal: S.abort ? S.abort.signal : undefined });
+      if (!res.ok) throw await toDriveError(res);
+      return await res.json();
+    } catch (err) {
+      if (attempt >= max || !isTransient(err)) throw err;
+      const wait = backoff(attempt);
+      log("retry " + (attempt + 1) + " in " + Math.round(wait) + "ms: " + explain(err));
+      await sleep(wait);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ scan */
+
+async function listChildren(folderId) {
+  const out = [];
+  let pageToken;
+  do {
+    const query = {
+      q: "'" + folderId.replace(/'/g, "\\'") + "' in parents and trashed = false",
+      fields: "nextPageToken,files(id,name,mimeType,size,md5Checksum,shortcutDetails)",
+      pageSize: "1000",
+      supportsAllDrives: "true",
+      includeItemsFromAllDrives: "true",
+      orderBy: "folder,name,createdTime",
+    };
+    if (pageToken) query.pageToken = pageToken;
+    const page = await apiJson("/files", query);
+    if (page.files) out.push.apply(out, page.files);
+    pageToken = page.nextPageToken;
+    if (pageToken) log("paging " + folderId + " (" + out.length + " so far)");
+  } while (pageToken);
+  return out;
+}
+
+function newFolderNode(id, name) {
+  return { id: id, name: name, children: [], files: [], selected: true, rendered: false };
+}
+
+async function scanTree(rootId) {
+  const meta = await apiJson("/files/" + encodeURIComponent(rootId),
+    { fields: "id,name,mimeType", supportsAllDrives: "true" }, 4);
+  if (meta.mimeType !== FOLDER_MIME) {
+    throw new DriveError(0, "notAFolder", "That link points to a file, not a folder. Paste a link to a Drive folder.");
+  }
+
+  S.rootName = safeName(meta.name);
+  const root = newFolderNode(rootId, meta.name);
+  const visited = new Set([rootId]);
+  let frontier = [root];
+  let folders = 0, files = 0;
+
+  while (frontier.length) {
+    if (S.cancelled) throw new DOMException("Aborted", "AbortError");
+    const batch = frontier;
+    frontier = [];
+
+    // Several folder listings in parallel; a failure here is reported, not fatal.
+    let cursor = 0;
+    const workers = [];
+    const width = Math.min(5, batch.length);
+    for (let w = 0; w < width; w++) {
+      workers.push((async function () {
+        while (cursor < batch.length) {
+          const node = batch[cursor++];
+          let children;
+          try {
+            children = await listChildren(node.id);
+          } catch (err) {
+            node.error = explain(err);
+            log("could not list " + node.name + ": " + node.error);
+            continue;
+          }
+          for (const raw of children) {
+            let entry = raw;
+            let isFolder = raw.mimeType === FOLDER_MIME;
+
+            if (raw.mimeType === SHORTCUT_MIME) {
+              const sc = raw.shortcutDetails;
+              if (!sc || !sc.targetId) {
+                node.files.push({ name: raw.name, kind: "unsupported", reason: "broken shortcut" });
+                continue;
+              }
+              isFolder = sc.targetMimeType === FOLDER_MIME;
+              entry = { id: sc.targetId, name: raw.name, mimeType: sc.targetMimeType };
+            }
+
+            if (isFolder) {
+              if (visited.has(entry.id)) { log("skipping shortcut loop at " + entry.name); continue; }
+              visited.add(entry.id);
+              const child = newFolderNode(entry.id, entry.name);
+              node.children.push(child);
+              frontier.push(child);
+              folders++;
+            } else {
+              node.files.push(classify(entry));
+              files++;
+            }
+          }
+          setScanMsg("Scanning. " + plural(files, "file") + " in " + plural(folders + 1, "folder") + " so far.");
+        }
+      })());
+    }
+    await Promise.all(workers);
+  }
+
+  return root;
+}
+
+function classify(entry) {
+  const base = { id: entry.id, name: entry.name, mime: entry.mimeType, md5: entry.md5Checksum || null };
+  if (NO_EXPORT[entry.mimeType]) {
+    base.kind = "unsupported";
+    base.reason = NO_EXPORT[entry.mimeType] + " — Google provides no download format";
+    return base;
+  }
+  if (EXPORT_OFFICE[entry.mimeType]) { base.kind = "export"; base.size = null; return base; }
+  if (entry.mimeType && entry.mimeType.indexOf("application/vnd.google-apps.") === 0) {
+    base.kind = "unsupported";
+    base.reason = entry.mimeType + " — Google provides no download format";
+    return base;
+  }
+  base.kind = "media";
+  base.size = entry.size != null ? Number(entry.size) : null;
+  return base;
+}
+
+/* Assign final on-disk names. Re-run when the export format changes. */
+function assignNames() {
+  const table = UI["export-format"].value === "pdf" ? EXPORT_PDF : EXPORT_OFFICE;
+  S.files = [];
+
+  // `rel` is relative to the destination folder, which is already named after
+  // the Drive folder — so the root contributes no segment of its own.
+  (function walk(node, rel) {
+    const used = new Set();
+    // Folders first, so a file can never take a folder's name.
+    for (const child of node.children) child.safe = dedupe(safeName(child.name), used);
+    for (const f of node.files) {
+      if (f.kind === "unsupported") {
+        f.path = [S.rootName].concat(rel, [safeName(f.name)]);
+        continue;
+      }
+      let base = safeName(f.name);
+      if (f.kind === "export") {
+        const spec = table[f.mime];
+        f.exportMime = spec[0];
+        const ext = spec[1];
+        if (base.toLowerCase().slice(-ext.length) !== ext) base += ext;
+      }
+      f.safe = dedupe(base, used);
+      f.dir = rel;
+      f.path = [S.rootName].concat(rel, [f.safe]);
+      f.node = node;
+      S.files.push(f);
+    }
+    for (const child of node.children) walk(child, rel.concat([child.safe]));
+  })(S.root, []);
+}
+
+/* ------------------------------------------------------------- tree view */
+
+function folderStats(node) {
+  let count = 0, size = 0, unknown = 0;
+  for (const f of node.files) {
+    if (f.kind === "unsupported") continue;
+    count++;
+    if (f.size != null) size += f.size; else unknown++;
+  }
+  for (const c of node.children) {
+    const s = folderStats(c);
+    count += s.count; size += s.size; unknown += s.unknown;
+  }
+  return { count: count, size: size, unknown: unknown };
+}
+
+function selectedFiles() {
+  const out = [];
+  (function walk(node) {
+    if (!node.selected) return;
+    for (const f of node.files) if (f.kind !== "unsupported") out.push(f);
+    for (const c of node.children) walk(c);
+  })(S.root);
+  return out;
+}
+
+function updateCounts() {
+  const sel = selectedFiles();
+  let size = 0, unknown = 0;
+  for (const f of sel) { if (f.size != null) size += f.size; else unknown++; }
+  let unsupported = 0;
+  (function walk(n) {
+    for (const f of n.files) if (f.kind === "unsupported") unsupported++;
+    for (const c of n.children) walk(c);
+  })(S.root);
+
+  const parts = ["<strong>" + plural(sel.length, "file") + "</strong>", bytes(size)];
+  if (unknown) parts.push(unknown + " of unknown size");
+  if (unsupported) parts.push(plural(unsupported, "item") + " cannot be downloaded");
+  UI.counts.innerHTML = parts.join(" · ");
+  UI["download-btn"].disabled = sel.length === 0 || !window.showDirectoryPicker;
+}
+
+function renderChildren(node, ul) {
+  for (const child of node.children) {
+    const li = document.createElement("li");
+    const det = document.createElement("details");
+    const sum = document.createElement("summary");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = child.selected;
+    cb.addEventListener("click", (e) => e.stopPropagation());
+    cb.addEventListener("change", () => {
+      (function set(n, v) { n.selected = v; if (n.cb) n.cb.checked = v; n.children.forEach((c) => set(c, v)); })(child, cb.checked);
+      updateCounts();
+    });
+    child.cb = cb;
+    const st = folderStats(child);
+    sum.appendChild(cb);
+    sum.appendChild(document.createTextNode(child.name + " "));
+    const span = document.createElement("span");
+    span.className = "size";
+    span.textContent = "(" + plural(st.count, "file") + (st.size ? ", " + bytes(st.size) : "") + ")";
+    sum.appendChild(span);
+    det.appendChild(sum);
+    const sub = document.createElement("ul");
+    det.appendChild(sub);
+    det.addEventListener("toggle", function () {
+      if (det.open && !child.rendered) { child.rendered = true; renderChildren(child, sub); }
+    }, { once: false });
+    li.appendChild(det);
+    ul.appendChild(li);
+  }
+
+  let firstFile = true;
+  for (const f of node.files) {
+    const li = document.createElement("li");
+    li.className = "file" + (f.kind === "unsupported" ? " skip" : "") +
+      (firstFile && node.children.length ? " first" : "");
+    firstFile = false;
+    li.textContent = f.name + (f.kind === "unsupported" ? " — " + f.reason : (f.size != null ? "  " + bytes(f.size) : ""));
+    ul.appendChild(li);
+  }
+}
+
+function renderTree() {
+  UI.tree.innerHTML = "";
+  const ul = document.createElement("ul");
+  S.root.rendered = true;
+  renderChildren(S.root, ul);
+  UI.tree.appendChild(ul);
+  updateCounts();
+}
+
+/* ------------------------------------------------------- destination I/O */
+
+async function ensureDir(segments) {
+  const key = segments.join("/");
+  if (S.dirCache.has(key)) return S.dirCache.get(key);
+  let handle = S.dir;
+  for (const seg of segments) {
+    handle = await handle.getDirectoryHandle(seg, { create: true });
+  }
+  S.dirCache.set(key, handle);
+  return handle;
+}
+
+/* --------------------------------------------------------------- hashing */
+
+function cmn(q,a,b,x,s,t){ a=(((a+q)|0)+((x+t)|0))|0; return (((a<<s)|(a>>>(32-s)))+b)|0; }
+function md5ff(a,b,c,d,x,s,t){ return cmn((b&c)|(~b&d),a,b,x,s,t); }
+function md5gg(a,b,c,d,x,s,t){ return cmn((b&d)|(c&~d),a,b,x,s,t); }
+function md5hh(a,b,c,d,x,s,t){ return cmn(b^c^d,a,b,x,s,t); }
+function md5ii(a,b,c,d,x,s,t){ return cmn(c^(b|~d),a,b,x,s,t); }
+function md5cycle(x,k){
+  let a=x[0],b=x[1],c=x[2],d=x[3];
+  a=md5ff(a,b,c,d,k[0],7,-680876936);   d=md5ff(d,a,b,c,k[1],12,-389564586);
+  c=md5ff(c,d,a,b,k[2],17,606105819);   b=md5ff(b,c,d,a,k[3],22,-1044525330);
+  a=md5ff(a,b,c,d,k[4],7,-176418897);   d=md5ff(d,a,b,c,k[5],12,1200080426);
+  c=md5ff(c,d,a,b,k[6],17,-1473231341); b=md5ff(b,c,d,a,k[7],22,-45705983);
+  a=md5ff(a,b,c,d,k[8],7,1770035416);   d=md5ff(d,a,b,c,k[9],12,-1958414417);
+  c=md5ff(c,d,a,b,k[10],17,-42063);     b=md5ff(b,c,d,a,k[11],22,-1990404162);
+  a=md5ff(a,b,c,d,k[12],7,1804603682);  d=md5ff(d,a,b,c,k[13],12,-40341101);
+  c=md5ff(c,d,a,b,k[14],17,-1502002290);b=md5ff(b,c,d,a,k[15],22,1236535329);
+  a=md5gg(a,b,c,d,k[1],5,-165796510);   d=md5gg(d,a,b,c,k[6],9,-1069501632);
+  c=md5gg(c,d,a,b,k[11],14,643717713);  b=md5gg(b,c,d,a,k[0],20,-373897302);
+  a=md5gg(a,b,c,d,k[5],5,-701558691);   d=md5gg(d,a,b,c,k[10],9,38016083);
+  c=md5gg(c,d,a,b,k[15],14,-660478335); b=md5gg(b,c,d,a,k[4],20,-405537848);
+  a=md5gg(a,b,c,d,k[9],5,568446438);    d=md5gg(d,a,b,c,k[14],9,-1019803690);
+  c=md5gg(c,d,a,b,k[3],14,-187363961);  b=md5gg(b,c,d,a,k[8],20,1163531501);
+  a=md5gg(a,b,c,d,k[13],5,-1444681467); d=md5gg(d,a,b,c,k[2],9,-51403784);
+  c=md5gg(c,d,a,b,k[7],14,1735328473);  b=md5gg(b,c,d,a,k[12],20,-1926607734);
+  a=md5hh(a,b,c,d,k[5],4,-378558);      d=md5hh(d,a,b,c,k[8],11,-2022574463);
+  c=md5hh(c,d,a,b,k[11],16,1839030562); b=md5hh(b,c,d,a,k[14],23,-35309556);
+  a=md5hh(a,b,c,d,k[1],4,-1530992060);  d=md5hh(d,a,b,c,k[4],11,1272893353);
+  c=md5hh(c,d,a,b,k[7],16,-155497632);  b=md5hh(b,c,d,a,k[10],23,-1094730640);
+  a=md5hh(a,b,c,d,k[13],4,681279174);   d=md5hh(d,a,b,c,k[0],11,-358537222);
+  c=md5hh(c,d,a,b,k[3],16,-722521979);  b=md5hh(b,c,d,a,k[6],23,76029189);
+  a=md5hh(a,b,c,d,k[9],4,-640364487);   d=md5hh(d,a,b,c,k[12],11,-421815835);
+  c=md5hh(c,d,a,b,k[15],16,530742520);  b=md5hh(b,c,d,a,k[2],23,-995338651);
+  a=md5ii(a,b,c,d,k[0],6,-198630844);   d=md5ii(d,a,b,c,k[7],10,1126891415);
+  c=md5ii(c,d,a,b,k[14],15,-1416354905);b=md5ii(b,c,d,a,k[5],21,-57434055);
+  a=md5ii(a,b,c,d,k[12],6,1700485571);  d=md5ii(d,a,b,c,k[3],10,-1894986606);
+  c=md5ii(c,d,a,b,k[10],15,-1051523);   b=md5ii(b,c,d,a,k[1],21,-2054922799);
+  a=md5ii(a,b,c,d,k[8],6,1873313359);   d=md5ii(d,a,b,c,k[15],10,-30611744);
+  c=md5ii(c,d,a,b,k[6],15,-1560198380); b=md5ii(b,c,d,a,k[13],21,1309151649);
+  a=md5ii(a,b,c,d,k[4],6,-145523070);   d=md5ii(d,a,b,c,k[11],10,-1120210379);
+  c=md5ii(c,d,a,b,k[2],15,718787259);   b=md5ii(b,c,d,a,k[9],21,-343485551);
+  x[0]=(x[0]+a)|0; x[1]=(x[1]+b)|0; x[2]=(x[2]+c)|0; x[3]=(x[3]+d)|0;
+}
+function md5Create(){ return { s:new Int32Array([1732584193,-271733879,-1732584194,271733878]),
+  buf:new Uint8Array(64), n:0, len:0, k:new Int32Array(16) }; }
+function md5Block(st,b,off){
+  const k=st.k;
+  for(let i=0;i<16;i++){ const j=off+i*4; k[i]=b[j]|(b[j+1]<<8)|(b[j+2]<<16)|(b[j+3]<<24); }
+  md5cycle(st.s,k);
+}
+function md5Update(st,chunk){
+  st.len+=chunk.length;
+  let i=0;
+  if(st.n){
+    const need=Math.min(64-st.n,chunk.length);
+    st.buf.set(chunk.subarray(0,need),st.n); st.n+=need; i=need;
+    if(st.n===64){ md5Block(st,st.buf,0); st.n=0; }
+  }
+  for(;i+64<=chunk.length;i+=64) md5Block(st,chunk,i);
+  if(i<chunk.length){ st.buf.set(chunk.subarray(i),st.n); st.n+=chunk.length-i; }
+}
+function md5Final(st){
+  const bits=st.len*8;
+  const tail=new Uint8Array(st.n+(st.n<56?64-st.n:128-st.n));
+  tail.set(st.buf.subarray(0,st.n)); tail[st.n]=0x80;
+  const lo=bits%4294967296, hi=Math.floor(bits/4294967296), p=tail.length-8;
+  tail[p]=lo&255; tail[p+1]=(lo>>>8)&255; tail[p+2]=(lo>>>16)&255; tail[p+3]=(lo>>>24)&255;
+  tail[p+4]=hi&255; tail[p+5]=(hi>>>8)&255; tail[p+6]=(hi>>>16)&255; tail[p+7]=(hi>>>24)&255;
+  for(let i=0;i<tail.length;i+=64) md5Block(st,tail,i);
+  let out="";
+  for(let i=0;i<4;i++){ const v=st.s[i]; for(let j=0;j<4;j++) out+=((v>>>(j*8))&255).toString(16).padStart(2,"0"); }
+  return out;
+}
+
+async function md5OfFile(handle) {
+  const file = await handle.getFile();
+  const reader = file.stream().getReader();
+  const st = md5Create();
+  for (;;) {
+    const r = await reader.read();
+    if (r.done) break;
+    md5Update(st, r.value);
+  }
+  return md5Final(st);
+}
+
+/* ------------------------------------------------------------- downloads */
+
+function gate() {
+  if (!S.paused) return Promise.resolve();
+  return new Promise((r) => S.waiters.push(r));
+}
+
+function setPaused(v) {
+  S.paused = v;
+  UI["pause-btn"].textContent = v ? "Resume" : "Pause";
+  UI["progress-title"].textContent = v ? "Paused" : "Downloading";
+  if (!v) {
+    const waiting = S.waiters;
+    S.waiters = [];
+    waiting.forEach((fn) => fn());
+    if (S.schedule) S.schedule();
+  }
+}
+
+function lowerConcurrency() {
+  if (S.limit <= 1) return;
+  S.limit = Math.max(1, Math.floor(S.limit / 2));
+  UI.concurrency.value = String(S.limit);
+  log("rate limited — lowering concurrency to " + S.limit);
+}
+
+function setActive(f, done, total) {
+  S.active.set(f, { done: done, total: total });
+  paintActive();
+}
+function clearActive(f) { S.active.delete(f); paintActive(); }
+
+function paintActive() {
+  const rows = [];
+  S.active.forEach((v, f) => {
+    const pct = v.total ? Math.floor((v.done / v.total) * 100) + "%" : bytes(v.done);
+    rows.push("<div><span>" + escapeHtml(f.path.join("/")) + "</span><span>" + pct + "</span></div>");
+  });
+  UI.inflight.innerHTML = rows.join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+let rateWindow = { t: 0, bytes: 0, rate: 0 };
+
+function paintProgress() {
+  const now = performance.now();
+  if (!rateWindow.t) { rateWindow.t = now; rateWindow.bytes = S.bytesDone; }
+  if (now - rateWindow.t > 1000) {
+    rateWindow.rate = ((S.bytesDone - rateWindow.bytes) * 1000) / (now - rateWindow.t);
+    rateWindow.t = now;
+    rateWindow.bytes = S.bytesDone;
+  }
+  const pct = S.bytesTotal ? Math.min(100, (S.bytesDone / S.bytesTotal) * 100) : 0;
+  UI["bar-fill"].style.width = pct.toFixed(1) + "%";
+  const done = S.results.length;
+  UI["progress-meta"].textContent =
+    bytes(S.bytesDone) + " of " + bytes(S.bytesTotal) +
+    (rateWindow.rate > 0 ? "  ·  " + bytes(rateWindow.rate) + "/s" : "");
+  UI["progress-sub"].textContent = done + " of " + S.totalFiles + " files";
+}
+
+/**
+ * Fetch one file and stream it to disk. Never buffers a whole file: chunks go
+ * straight to the writable, so a 50GB folder costs no more memory than a 50MB one.
+ */
+async function downloadOne(f) {
+  const isExport = f.kind === "export";
+  let dirHandle = null;
+  let counted = 0;
+
+  if (!DRYRUN) {
+    dirHandle = await ensureDir(f.dir);
+    // Resume: a file already on disk at the right size is left alone.
+    try {
+      const existing = await dirHandle.getFileHandle(f.safe);
+      const onDisk = await existing.getFile();
+      if (f.size != null ? onDisk.size === f.size : onDisk.size > 0) {
+        log("skip (already complete): " + f.path.join("/"));
+        return { status: "skipped", reason: "already on disk", bytes: onDisk.size };
+      }
+      log("size mismatch, re-downloading: " + f.path.join("/"));
+    } catch (e) { /* not there yet */ }
+  }
+
+  let networkAttempts = 0;
+  let rateAttempts = 0;
+  let acknowledgeAbuse = false;
+
+  for (;;) {
+    await gate();
+    if (S.cancelled) throw new DOMException("Aborted", "AbortError");
+
+    S.bytesDone -= counted;
+    counted = 0;
+    let writable = null;
+
+    try {
+      const target = isExport
+        ? url("/files/" + encodeURIComponent(f.id) + "/export", { mimeType: f.exportMime })
+        : url("/files/" + encodeURIComponent(f.id), Object.assign(
+            { alt: "media", supportsAllDrives: "true" },
+            acknowledgeAbuse ? { acknowledgeAbuse: "true" } : {}));
+
+      const res = await fetch(target, { signal: S.abort.signal });
+      if (!res.ok) throw await toDriveError(res);
+
+      if (DRYRUN) {
+        // Exercise the real request and the real error paths, write nothing.
+        try { await res.body.cancel(); } catch (e) {}
+        log("dryrun would write " + f.path.join("/"));
+        return { status: "done", reason: "dry run", bytes: 0 };
+      }
+
+      const fileHandle = await dirHandle.getFileHandle(f.safe, { create: true });
+      writable = await fileHandle.createWritable();
+      const reader = res.body.getReader();
+      setActive(f, 0, f.size);
+
+      for (;;) {
+        await gate();
+        if (S.cancelled) throw new DOMException("Aborted", "AbortError");
+        const r = await reader.read();
+        if (r.done) break;
+        await writable.write(r.value);
+        counted += r.value.length;
+        S.bytesDone += r.value.length;
+        setActive(f, counted, f.size);
+        paintProgress();
+      }
+
+      await writable.close();
+      writable = null;
+
+      if (f.size != null && counted !== f.size) {
+        throw new Error("transfer ended early at " + counted + " of " + f.size + " bytes");
+      }
+
+      if (UI.verify.checked && f.md5) {
+        const got = await md5OfFile(fileHandle);
+        if (got !== f.md5) {
+          await dirHandle.removeEntry(f.safe).catch(() => {});
+          return { status: "failed", reason: "checksum mismatch — file deleted", bytes: 0 };
+        }
+        log("checksum ok: " + f.path.join("/"));
+      }
+
+      return { status: "done", bytes: counted };
+
+    } catch (err) {
+      // Always clear a partial file; a half-written file must never look complete.
+      if (writable) { try { await writable.abort(); } catch (e) {} }
+      if (!DRYRUN && dirHandle && counted > 0) {
+        await dirHandle.removeEntry(f.safe).catch(() => {});
+      }
+
+      if (S.cancelled || (err && err.name === "AbortError")) throw err;
+
+      if (err instanceof DriveError && err.status === 403 && err.reason === "cannotDownloadAbusiveFile" && !acknowledgeAbuse) {
+        acknowledgeAbuse = true;
+        log("retrying with acknowledgeAbuse: " + f.path.join("/"));
+        continue;
+      }
+      if (err instanceof DriveError && err.status === 403 && err.reason === "downloadQuotaExceeded") {
+        return { status: "failed", reason: explain(err), bytes: 0 };
+      }
+      if (err instanceof DriveError && err.status === 404) {
+        return { status: "failed", reason: explain(err), bytes: 0 };
+      }
+      if (isRateLimited(err)) {
+        S.rateLimitHits++;
+        if (S.rateLimitHits % 3 === 1) lowerConcurrency();
+        if (++rateAttempts > 8) return { status: "failed", reason: "still rate limited after 8 tries", bytes: 0 };
+        await sleep(backoff(rateAttempts));
+        continue;
+      }
+      if (isTransient(err) && ++networkAttempts <= 3) {
+        log("attempt " + networkAttempts + " failed for " + f.path.join("/") + ": " + explain(err));
+        await sleep(backoff(networkAttempts));
+        continue;
+      }
+      return { status: "failed", reason: explain(err), bytes: 0 };
+    }
+  }
+}
+
+function runQueue(files) {
+  return new Promise((resolve) => {
+    S.queue = files.slice();
+    S.inFlight = 0;
+    S.schedule = function () {
+      if (S.cancelled) { if (S.inFlight === 0) resolve(); return; }
+      while (!S.paused && S.inFlight < S.limit && S.queue.length) {
+        const f = S.queue.shift();
+        S.inFlight++;
+        downloadOne(f).then(
+          (r) => { S.results.push({ file: f, result: r }); },
+          (err) => {
+            if (!(err && err.name === "AbortError")) {
+              S.results.push({ file: f, result: { status: "failed", reason: explain(err), bytes: 0 } });
+            }
+          }
+        ).then(() => {
+          clearActive(f);
+          S.inFlight--;
+          paintProgress();
+          S.schedule();
+        });
+      }
+      if (!S.queue.length && S.inFlight === 0) resolve();
+    };
+    S.schedule();
+  });
+}
+
+/* ---------------------------------------------------------------- report */
+
+function finish() {
+  UI.progress.hidden = true;
+  UI.summary.hidden = false;
+  const done = S.results.filter((r) => r.result.status === "done");
+  const skipped = S.results.filter((r) => r.result.status === "skipped");
+  const failed = S.results.filter((r) => r.result.status === "failed");
+
+  UI["summary-title"].textContent = S.cancelled ? "Cancelled" : (failed.length ? "Finished with failures" : "Finished");
+
+  const lines = [];
+  lines.push("<p>" + plural(done.length, "file") + " downloaded" +
+    (skipped.length ? ", " + skipped.length + " already on disk" : "") +
+    (failed.length ? ", " + failed.length + " failed" : "") + ".</p>");
+  if (failed.length) {
+    lines.push("<ul>" + failed.slice(0, 200).map((r) =>
+      "<li>" + escapeHtml(r.file.path.join("/")) + " — " + escapeHtml(r.result.reason) + "</li>").join("") + "</ul>");
+  }
+  UI.report.innerHTML = lines.join("");
+  UI["retry-btn"].hidden = failed.length === 0;
+  S.failed = failed.map((r) => r.file);
+}
+
+function buildReportText() {
+  const when = new Date().toISOString();
+  const out = ["GDrive Whole Folder Downloader — report", when, "Folder: " + S.rootName, ""];
+  const by = { done: [], skipped: [], failed: [] };
+  for (const r of S.results) by[r.result.status].push(r);
+  out.push("Downloaded: " + by.done.length);
+  out.push("Skipped (already on disk): " + by.skipped.length);
+  out.push("Failed: " + by.failed.length);
+  out.push("");
+  for (const group of ["failed", "skipped", "done"]) {
+    if (!by[group].length) continue;
+    out.push("== " + group.toUpperCase() + " ==");
+    for (const r of by[group]) {
+      out.push(r.file.path.join("/") + (r.result.reason ? "  — " + r.result.reason : ""));
+    }
+    out.push("");
+  }
+  return out.join("\n");
+}
+
+/* -------------------------------------------------------------- UI wiring */
+
+function setScanMsg(text, kind) {
+  UI["scan-msg"].hidden = !text;
+  UI["scan-msg"].textContent = text || "";
+  UI["scan-msg"].className = "notice" + (kind ? " " + kind : "");
+}
+
+UI["scan-form"].addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const id = parseFolderId(UI.link.value);
+  if (!id) {
+    setScanMsg("Expected a Drive folder link such as https://drive.google.com/drive/folders/ABC123, or the folder ID on its own.", "bad");
+    return;
+  }
+  if (!isConfigured()) {
+    setScanMsg("No API key is set, so there is nothing to ask Google with. Add one under “Use your own API key”.", "warn");
+    return;
+  }
+
+  UI["scan-btn"].disabled = true;
+  UI.review.hidden = true;
+  UI.summary.hidden = true;
+  S.cancelled = false;
+  S.abort = new AbortController();
+  setScanMsg("Scanning.");
+
+  try {
+    S.root = await scanTree(id);
+    assignNames();
+    renderTree();
+    setScanMsg("");
+    UI["dest-note"].textContent =
+      "Files go into a new folder named “" + S.rootName + "” inside the folder you choose." +
+      (DRYRUN ? " Dry run: nothing will be written." : "");
+    UI.review.hidden = false;
+    UI.review.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    setScanMsg(explain(err), "bad");
+  } finally {
+    UI["scan-btn"].disabled = false;
+  }
+});
+
+UI["export-format"].addEventListener("change", function () {
+  if (!S.root) return;
+  assignNames();
+  renderTree();
+});
+
+UI.concurrency.addEventListener("change", function () {
+  const v = Math.max(1, Math.min(10, Number(UI.concurrency.value) || 5));
+  UI.concurrency.value = String(v);
+  S.limit = v;
+  if (S.schedule) S.schedule();
+});
+
+async function startDownload(files) {
+  S.limit = Math.max(1, Math.min(10, Number(UI.concurrency.value) || 5));
+  S.cancelled = false;
+  S.paused = false;
+  S.abort = new AbortController();
+  S.results = [];
+  S.bytesDone = 0;
+  S.bytesTotal = files.reduce((n, f) => n + (f.size || 0), 0);
+  S.totalFiles = files.length;
+  S.active.clear();
+  S.rateLimitHits = 0;
+  rateWindow = { t: 0, bytes: 0, rate: 0 };
+
+  if (!DRYRUN) {
+    try {
+      const picked = await window.showDirectoryPicker({ mode: "readwrite" });
+      S.dir = await picked.getDirectoryHandle(S.rootName, { create: true });
+      S.dirCache = new Map();
+    } catch (err) {
+      if (err && err.name === "AbortError") return; // picker dismissed
+      setScanMsg("Could not use that folder: " + (err.message || err), "bad");
+      return;
+    }
+  }
+
+  UI.summary.hidden = true;
+  UI.progress.hidden = false;
+  setPaused(false);
+  paintProgress();
+  UI.progress.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  await runQueue(files);
+  finish();
+}
+
+UI["download-btn"].addEventListener("click", function () { startDownload(selectedFiles()); });
+UI["retry-btn"].addEventListener("click", function () { if (S.failed && S.failed.length) startDownload(S.failed); });
+UI["pause-btn"].addEventListener("click", function () { setPaused(!S.paused); });
+UI["cancel-btn"].addEventListener("click", function () {
+  S.cancelled = true;
+  if (S.paused) setPaused(false);
+  if (S.abort) S.abort.abort();
+});
+
+UI["report-btn"].addEventListener("click", function () {
+  const blob = new Blob([buildReportText()], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = S.rootName + " — download report.txt";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+});
+
+UI["user-key"].addEventListener("input", function () {
+  if (UI["remember-key"].checked) localStorage.setItem(STORE, UI["user-key"].value.trim());
+  refreshConfigNotice();
+});
+UI["remember-key"].addEventListener("change", function () {
+  if (UI["remember-key"].checked) localStorage.setItem(STORE, UI["user-key"].value.trim());
+  else localStorage.removeItem(STORE);
+});
+
+function refreshConfigNotice() {
+  UI.unconfigured.hidden = isConfigured();
+  if (!isConfigured()) {
+    UI.unconfigured.textContent =
+      "This copy has no API key yet. The owner pastes one into index.html, or you can use your own below.";
+  }
+}
+
+(function init() {
+  let stored = null;
+  try { stored = localStorage.getItem(STORE); } catch (e) {}
+  if (stored) {
+    UI["user-key"].value = stored;
+    UI["remember-key"].checked = true;
+    UI["key-details"].open = true;
+  }
+  refreshConfigNotice();
+
+  if (!window.showDirectoryPicker) {
+    UI.gate.hidden = false;
+    UI.gate.textContent =
+      "This browser cannot write files to a folder you choose, so downloading will not work here. " +
+      "Safari and Firefox have not shipped the File System Access API. Use Chrome, Edge, or Opera.";
+    UI["download-btn"].disabled = true;
+  }
+
+  if (DEBUG) UI["log-section"].hidden = false;
+  if (DRYRUN) log("dry run: requests are made, nothing is written to disk");
+  log("ready");
+})();
+</script>
 </body>
 </html>
