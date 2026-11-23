@@ -78,9 +78,16 @@ Two flags are built into the page:
 
 - [ ] **Chrome** — full path works end to end.
 - [ ] **Edge** — full path works end to end.
-- [ ] **Safari** — the gate message appears on load, the download button is disabled,
-      and scanning still works. Nothing else breaks.
+- [ ] **Safari** — on load, a note explains files will go to Downloads one at a time.
+      Scanning works, the download button is enabled, and the button reads "Download to
+      this device".
 - [ ] **Firefox** — same as Safari.
+- [ ] **Safari or Firefox, full run** — every file arrives in Downloads, named like
+      `Root_subfolder_file.ext` with no `/` in the name. The browser asks once to allow
+      multiple downloads; allow it. Count the files: none are missing.
+- [ ] **A browser on a phone** — same fallback path; the app does not dead-end.
+- [ ] **A file over 2GB in fallback mode** — reported as too large for that browser,
+      with the suggestion to use Chrome, Edge or Opera. The run continues.
 - [ ] **Served from `https://` GitHub Pages** — works, including the folder picker.
 - [ ] **Opened locally as `file://`** — works. `file://` counts as a secure context in
       Chrome, so the folder picker is available. Note that if the browser blocks site

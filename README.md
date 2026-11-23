@@ -55,7 +55,10 @@ https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/
      `https://YOUR-USERNAME.github.io/*` (and your custom domain, if you have one).
 6. **Save.** Restrictions can take a few minutes to take effect.
 
-### 2. Paste the key into index.html
+### 2. Paste the key into index.html (optional)
+
+Visitors can paste their own key into the page, which is the default. Setting one here
+just means they do not have to.
 
 Near the top of the `<script>` block there is exactly one line to change:
 
@@ -87,9 +90,10 @@ to PNG converter will do.
 - **Link-shared folders only.** An API key can only read files shared as "anyone with
   the link". Folders shared with specific people need OAuth, which this tool
   deliberately does not do.
-- **Chrome, Edge, or Opera.** Writing to a folder you choose needs the File System
-  Access API. Safari and Firefox have not shipped it, and the app says so immediately
-  rather than failing at the last step.
+- **Folder structure needs Chrome, Edge or Opera.** Writing into a folder you choose
+  needs the File System Access API. Safari, Firefox and mobile browsers have not shipped
+  it, so there the files are saved one at a time to the Downloads folder with the folder
+  path folded into each filename. Everything still downloads; only the folders are lost.
 - **Google Docs, Sheets and Slides are converted.** They have no original bytes to
   download, so they are exported to .docx, .xlsx and .pptx (or PDF, if you prefer).
   Exports have their own size cap and very large documents can fail; those are listed
@@ -143,9 +147,14 @@ report so you can retry them later.
 
 ### Does this work in Safari or Firefox?
 
-No. Writing files into a folder you choose needs the File System Access API, which only
-Chromium-based browsers (Chrome, Edge, Opera) have shipped. The page detects this on
-load and tells you up front instead of letting you get as far as picking a folder.
+Yes, with one difference. Saving into a folder you choose needs the File System Access
+API, which only Chrome, Edge and Opera have shipped. In other browsers — including
+Safari, Firefox and browsers on phones — every file still downloads, but it goes to your
+Downloads folder one at a time with the folder path in the filename, like
+`Holiday photos_Day 1_beach.jpg`. The page says which mode it is in before you start.
+Two caveats in that mode: the browser asks once whether to allow multiple downloads, and
+re-running starts over instead of resuming, because a page cannot see what is already in
+your Downloads folder.
 
 ### How is this different from gdown?
 

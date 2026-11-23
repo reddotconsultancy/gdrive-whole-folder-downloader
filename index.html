@@ -99,6 +99,10 @@ details { margin-top: 24px; }
 summary { cursor: pointer; font-size: .85rem; color: var(--soft); }
 details .body { padding-top: 12px; }
 .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 10px; }
+.keybox { margin-top: 28px; }
+.hint { color: var(--soft); font-size: .85rem; margin: 8px 0 0; }
+.steps { margin: 10px 0 0; padding-left: 20px; font-size: .88rem; color: var(--soft); }
+.steps li { margin-bottom: 6px; }
 .check input { margin: 0; }
 
 section { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--line); }
@@ -169,6 +173,40 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
   <p id="unconfigured" class="notice warn" hidden></p>
   <p id="scan-msg" class="notice" hidden></p>
 
+  <div class="keybox">
+    <label>
+      <span class="lbl">Your Google API key</span>
+      <input id="user-key" type="text" spellcheck="false" autocomplete="off">
+    </label>
+    <p class="hint">
+      The key stays in this browser. We never receive it, store it, or send it anywhere
+      but Google. There is no server here to send it to.
+    </p>
+    <label class="check">
+      <input id="remember-key" type="checkbox">
+      <span>Remember in this browser</span>
+    </label>
+
+    <details id="key-help">
+      <summary>How to get a key</summary>
+      <ol class="steps">
+        <li>
+          <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Create a project</a>
+          — type any name, click Create, wait a few seconds.
+        </li>
+        <li>
+          <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Enable the Google Drive API</a>
+          — make sure your new project is selected at the top, click Enable.
+        </li>
+        <li>
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Create credentials</a>
+          — Create credentials, API key, then copy the key it shows you.
+        </li>
+        <li>Paste it in the box above. It is free and Google does not ask for a card.</li>
+      </ol>
+    </details>
+  </div>
+
   <ul class="points">
     <li>Runs entirely in your browser. Files go straight from Google to your disk.</li>
     <li>Nothing is stored. No sign-in, no account, no link history, no analytics.</li>
@@ -178,22 +216,11 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
   </ul>
 
   <p class="limits">
-    Works on folders shared "anyone with the link". Needs Chrome, Edge, or Opera.
+    Works on folders shared "anyone with the link". Chrome, Edge and Opera rebuild the folders
+    on disk; other browsers save the files one by one.
     Google Docs, Sheets and Slides are converted to Office files.
   </p>
 
-  <details id="key-details">
-    <summary>Use your own API key</summary>
-    <div class="body">
-      <label>
-        <input id="user-key" type="text" spellcheck="false" autocomplete="off">
-      </label>
-      <label class="check">
-        <input id="remember-key" type="checkbox">
-        <span>Remember in this browser</span>
-      </label>
-    </div>
-  </details>
 
   <section id="review" hidden>
     <h2>Review</h2>
@@ -268,6 +295,8 @@ const API_KEY = "PASTE_YOUR_API_KEY_HERE";
 const KEY_PLACEHOLDER = "PASTE_YOUR_API_KEY_HERE";
 const API = "https://www.googleapis.com/drive/v3";
 const STORE = "gwfd.userKey";
+const FALLBACK_MAX_BYTES = 2 * 1024 * 1024 * 1024;
+const FALLBACK_GAP_MS = 250;
 
 const QS = new URLSearchParams(location.search);
 const DEBUG = QS.get("debug") === "1";
@@ -301,7 +330,7 @@ const NO_EXPORT = {
 
 const $ = (id) => document.getElementById(id);
 const UI = {};
-for (const id of ["scan-form","link","scan-btn","gate","unconfigured","scan-msg","key-details","user-key",
+for (const id of ["scan-form","link","scan-btn","gate","unconfigured","scan-msg","key-help","user-key",
   "remember-key","review","counts","tree","concurrency","export-format","verify","dest-note","download-btn",
   "progress","progress-title","bar-fill","progress-meta","progress-sub","inflight","pause-btn","cancel-btn",
   "summary","summary-title","report","retry-btn","report-btn","log-section","log"]) {
@@ -327,6 +356,7 @@ const S = {
   results: [],
   active: new Map(),
   rateLimitHits: 0,
+  fallback: false,   // no File System Access API: save to Downloads instead
 };
 
 /* ---------------------------------------------------------------- logging */
@@ -678,7 +708,7 @@ function updateCounts() {
   if (unknown) parts.push(unknown + " of unknown size");
   if (unsupported) parts.push(plural(unsupported, "item") + " cannot be downloaded");
   UI.counts.innerHTML = parts.join(" · ");
-  UI["download-btn"].disabled = sel.length === 0 || !window.showDirectoryPicker;
+  UI["download-btn"].disabled = sel.length === 0;
 }
 
 function renderChildren(node, ul) {
@@ -833,6 +863,11 @@ async function md5OfFile(handle) {
 
 /* ------------------------------------------------------------- downloads */
 
+/** Fallback mode has no folders, so the path goes into the filename. */
+function flatName(f) {
+  return f.path.join("_").replace(/[/\\]/g, "_");
+}
+
 function gate() {
   if (!S.paused) return Promise.resolve();
   return new Promise((r) => S.waiters.push(r));
@@ -904,7 +939,7 @@ async function downloadOne(f) {
   let dirHandle = null;
   let counted = 0;
 
-  if (!DRYRUN) {
+  if (!DRYRUN && !S.fallback) {
     dirHandle = await ensureDir(f.dir);
     // Resume: a file already on disk at the right size is left alone.
     try {
@@ -947,6 +982,36 @@ async function downloadOne(f) {
         return { status: "done", reason: "dry run", bytes: 0 };
       }
 
+      if (S.fallback) {
+        // No folder handle available, so collect the file and hand it to the
+        // browser's own downloader, with the folder path folded into the name.
+        const reader2 = res.body.getReader();
+        const parts = [];
+        setActive(f, 0, f.size);
+        for (;;) {
+          await gate();
+          if (S.cancelled) throw new DOMException("Aborted", "AbortError");
+          const r2 = await reader2.read();
+          if (r2.done) break;
+          parts.push(r2.value);
+          counted += r2.value.length;
+          S.bytesDone += r2.value.length;
+          if (counted > FALLBACK_MAX_BYTES) {
+            try { await reader2.cancel(); } catch (e) {}
+            throw Object.assign(new Error("too large for this browser to hold in memory — use Chrome, Edge or Opera to write it straight to disk"), { name: "FatalError" });
+          }
+          setActive(f, counted, f.size);
+          paintProgress();
+        }
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob(parts));
+        link.download = flatName(f);
+        link.click();
+        setTimeout(function (href) { return function () { URL.revokeObjectURL(href); }; }(link.href), 60000);
+        await sleep(FALLBACK_GAP_MS);
+        return { status: "done", bytes: counted };
+      }
+
       const fileHandle = await dirHandle.getFileHandle(f.safe, { create: true });
       writable = await fileHandle.createWritable();
       const reader = res.body.getReader();
@@ -985,7 +1050,7 @@ async function downloadOne(f) {
     } catch (err) {
       // Always clear a partial file; a half-written file must never look complete.
       if (writable) { try { await writable.abort(); } catch (e) {} }
-      if (!DRYRUN && dirHandle && counted > 0) {
+      if (!DRYRUN && !S.fallback && dirHandle && counted > 0) {
         await dirHandle.removeEntry(f.safe).catch(() => {});
       }
 
@@ -1008,6 +1073,9 @@ async function downloadOne(f) {
         if (++rateAttempts > 8) return { status: "failed", reason: "still rate limited after 8 tries", bytes: 0 };
         await sleep(backoff(rateAttempts));
         continue;
+      }
+      if (err && err.name === "FatalError") {
+        return { status: "failed", reason: err.message, bytes: 0 };
       }
       if (isTransient(err) && ++networkAttempts <= 3) {
         log("attempt " + networkAttempts + " failed for " + f.path.join("/") + ": " + explain(err));
@@ -1094,6 +1162,22 @@ function buildReportText() {
 
 /* -------------------------------------------------------------- UI wiring */
 
+function describeDestination() {
+  if (S.fallback || !window.showDirectoryPicker) {
+    UI["download-btn"].textContent = "Download to this device";
+    UI["dest-note"].textContent =
+      "This browser cannot create folders, so files are saved one at a time to your Downloads " +
+      "folder, each named like “" + S.rootName + "_subfolder_file.jpg”. The structure is in the " +
+      "filenames. Your browser will ask once whether to allow multiple downloads — say yes, or only " +
+      "the first file arrives. A re-run starts over rather than resuming.";
+  } else {
+    UI["download-btn"].textContent = "Choose destination and download";
+    UI["dest-note"].textContent =
+      "Files go into a new folder named “" + S.rootName + "” inside the folder you choose.";
+  }
+  if (DRYRUN) UI["dest-note"].textContent += " Dry run: nothing will be written.";
+}
+
 function setScanMsg(text, kind) {
   UI["scan-msg"].hidden = !text;
   UI["scan-msg"].textContent = text || "";
@@ -1108,7 +1192,7 @@ UI["scan-form"].addEventListener("submit", async function (e) {
     return;
   }
   if (!isConfigured()) {
-    setScanMsg("No API key is set, so there is nothing to ask Google with. Add one under “Use your own API key”.", "warn");
+    setScanMsg("Add your Google API key first — the box below has the steps.", "warn");
     return;
   }
 
@@ -1124,9 +1208,7 @@ UI["scan-form"].addEventListener("submit", async function (e) {
     assignNames();
     renderTree();
     setScanMsg("");
-    UI["dest-note"].textContent =
-      "Files go into a new folder named “" + S.rootName + "” inside the folder you choose." +
-      (DRYRUN ? " Dry run: nothing will be written." : "");
+    describeDestination();
     UI.review.hidden = false;
     UI.review.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (err) {
@@ -1162,7 +1244,12 @@ async function startDownload(files) {
   S.rateLimitHits = 0;
   rateWindow = { t: 0, bytes: 0, rate: 0 };
 
-  if (!DRYRUN) {
+  S.fallback = !window.showDirectoryPicker;
+  if (S.fallback) {
+    // Browsers drop rapid back-to-back downloads, so these go one at a time,
+    // paced apart. Measured: without the pacing most files never arrive.
+    S.limit = 1;
+  } else if (!DRYRUN) {
     try {
       const picked = await window.showDirectoryPicker({ mode: "readwrite" });
       S.dir = await picked.getDirectoryHandle(S.rootName, { create: true });
@@ -1215,7 +1302,7 @@ function refreshConfigNotice() {
   UI.unconfigured.hidden = isConfigured();
   if (!isConfigured()) {
     UI.unconfigured.textContent =
-      "This copy has no API key yet. The owner pastes one into index.html, or you can use your own below.";
+      "Add a Google API key below to start. The steps take about two minutes.";
   }
 }
 
@@ -1225,16 +1312,19 @@ function refreshConfigNotice() {
   if (stored) {
     UI["user-key"].value = stored;
     UI["remember-key"].checked = true;
-    UI["key-details"].open = true;
   }
+  UI["key-help"].open = !isConfigured();
   refreshConfigNotice();
 
   if (!window.showDirectoryPicker) {
+    // Still usable: files go to the Downloads folder one by one instead.
+    S.fallback = true;
     UI.gate.hidden = false;
+    UI.gate.className = "notice";
     UI.gate.textContent =
-      "This browser cannot write files to a folder you choose, so downloading will not work here. " +
-      "Safari and Firefox have not shipped the File System Access API. Use Chrome, Edge, or Opera.";
-    UI["download-btn"].disabled = true;
+      "This browser cannot save into a folder you choose, so files go to your Downloads folder " +
+      "one at a time, with the folder path in each filename. Chrome, Edge and Opera rebuild the " +
+      "folders on disk instead.";
   }
 
   if (DEBUG) UI["log-section"].hidden = false;
