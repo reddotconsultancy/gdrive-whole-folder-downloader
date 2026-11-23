@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drive Folder Downloader</title>
+<meta name="description" content="Paste a public Google Drive folder link and download the whole folder as one archive — subfolders included, no 2 GB split.">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<main class="wrap">
+
+  <header class="head">
+    <h1>Download a whole Drive folder</h1>
+    <p class="lede">
+      Paste a Google Drive folder shared as <strong>“Anyone with the link”</strong>
+      and get everything in one archive — subfolders and all, with no 2&nbsp;GB
+      split and no clicking through pages.
+    </p>
+  </header>
+
+  <section class="card">
+    <form id="scan-form" autocomplete="off">
+      <label class="field">
+        <span class="field-label">Drive folder link</span>
+        <input id="folder-link" type="text" inputmode="url" spellcheck="false"
+               placeholder="https://drive.google.com/drive/folders/…" required>
+      </label>
+
+      <label class="field" id="key-row" hidden>
+        <span class="field-label">Google API key</span>
+        <input id="api-key" type="text" spellcheck="false" placeholder="AIza…">
+        <small class="hint">
+          Needs the Drive API enabled. Stored only in this browser, never sent anywhere but Google.
+        </small>
+      </label>
+
+      <button id="scan-btn" class="btn btn-primary" type="submit">Scan folder</button>
+      <p id="scan-status" class="status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="card" id="summary" hidden>
+    <div id="stats" class="stats"></div>
+    <div id="warnings" class="warnings"></div>
+    <div class="actions">
+      <button id="start-btn" class="btn btn-primary" type="button">Download as one ZIP</button>
+      <button id="alt-btn" class="btn" type="button" hidden>Fetch files one by one</button>
+    </div>
+    <p id="mode-note" class="hint"></p>
+  </section>
+
+  <section class="card" id="progress" hidden>
+    <div class="progress-head">
+      <h2 id="progress-head">Downloading</h2>
+      <button id="cancel-btn" class="btn btn-quiet" type="button">Cancel</button>
+    </div>
+    <div id="bar" class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="bar-fill" class="bar-fill"></div>
+    </div>
+    <p id="progress-meta" class="meta"></p>
+    <p id="current-file" class="current"></p>
+    <div id="log" class="log" aria-live="polite"></div>
+  </section>
+
+  <section class="card" id="result" hidden></section>
+
+  <section class="card support" id="support" hidden>
+    <h2>Free to use</h2>
+    <p class="hint">
+      This runs entirely in your browser and costs nothing to use. Donations keep
+      the API quota topped up.
+    </p>
+  </section>
+
+  <footer class="foot">
+    <p>
+      Your files never touch a server of ours — the browser talks straight to
+      Google and writes the archive to your disk.
+    </p>
+    <p>
+      <a href="https://github.com/reddotconsultancy/gdrive-whole-folder-downloader">Source on GitHub</a>
+      · MIT licensed
+    </p>
+  </footer>
+
+</main>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "gdrive-whole-folder-downloader",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Download an entire public Google Drive folder as one archive, in the browser.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node test/e2e.mjs",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
