@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Download a Whole Google Drive Folder at Once — No Zip Splits</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://www.googleapis.com; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<title>Download a Whole Google Drive Folder at Once, No Zip Splits</title>
 <meta name="description" content="Download an entire Google Drive folder at once, straight to disk with its structure intact. No 2GB zip splits to piece together, no sign-in. Runs in your browser.">
 <meta name="keywords" content="download google drive folder, google drive folder downloader, download entire google drive folder, google drive 2gb zip split, download whole google drive folder at once, gdrive folder downloader">
 <meta name="robots" content="index,follow">
@@ -11,15 +12,15 @@
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/">
-<meta property="og:title" content="Download a Whole Google Drive Folder at Once — No Zip Splits">
+<meta property="og:title" content="Download a Whole Google Drive Folder at Once, No Zip Splits">
 <meta property="og:description" content="Download an entire Google Drive folder at once, straight to disk with its structure intact. No 2GB zip splits to piece together, no sign-in.">
-<meta property="og:image" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/og-image.png">
+<meta property="og:image" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/assets/og-image.png">
 <meta property="og:site_name" content="GDrive Whole Folder Downloader">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Download a Whole Google Drive Folder at Once — No Zip Splits">
+<meta name="twitter:title" content="Download a Whole Google Drive Folder at Once, No Zip Splits">
 <meta name="twitter:description" content="Download an entire Google Drive folder at once, straight to disk with its structure intact. No 2GB zip splits to piece together, no sign-in.">
-<meta name="twitter:image" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/og-image.png">
+<meta name="twitter:image" content="https://reddotconsultancy.github.io/gdrive-whole-folder-downloader/assets/og-image.png">
 
 <script type="application/ld+json">
 {
@@ -179,8 +180,8 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
       <input id="user-key" type="text" spellcheck="false" autocomplete="off">
     </label>
     <p class="hint">
-      The key stays in this browser. We never receive it, store it, or send it anywhere
-      but Google. There is no server here to send it to.
+      Your key stays in this browser. We never see it and never store it. There is no
+      server behind this page, so there is nowhere else for it to go.
     </p>
     <label class="check">
       <input id="remember-key" type="checkbox">
@@ -192,15 +193,15 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
       <ol class="steps">
         <li>
           <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Create a project</a>
-          — type any name, click Create, wait a few seconds.
+          Type any name, click Create, then wait a few seconds.
         </li>
         <li>
           <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Enable the Google Drive API</a>
-          — make sure your new project is selected at the top, click Enable.
+          Check your new project is selected at the top, then click Enable.
         </li>
         <li>
           <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Create credentials</a>
-          — Create credentials, API key, then copy the key it shows you.
+          Pick Create credentials, then API key, then copy the key it gives you.
         </li>
         <li>Paste it in the box above. It is free and Google does not ask for a card.</li>
       </ol>
@@ -210,15 +211,15 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
   <ul class="points">
     <li>Runs entirely in your browser. Files go straight from Google to your disk.</li>
     <li>Nothing is stored. No sign-in, no account, no link history, no analytics.</li>
-    <li>The whole folder in one go, structure intact — no 2GB zips to piece together.</li>
+    <li>The whole folder in one go, structure intact. No 2GB zips to piece together.</li>
     <li>Downloads several files at once, so it finishes faster.</li>
     <li>Stops halfway? Run it again and it picks up where it left off.</li>
   </ul>
 
   <p class="limits">
-    Works on folders shared "anyone with the link". Chrome, Edge and Opera rebuild the folders
-    on disk; other browsers save the files one by one.
-    Google Docs, Sheets and Slides are converted to Office files.
+    Works on folders shared with "anyone with the link". Chrome, Edge and Opera keep your
+    folders; other browsers save the files one by one.
+    Google Docs, Sheets and Slides come out as Office files.
   </p>
 
 
@@ -229,11 +230,11 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
 
     <div class="settings">
       <label>
-        <span class="lbl">At once</span>
+        <span class="lbl">Files at once</span>
         <input id="concurrency" type="number" min="1" max="10" step="1" value="5">
       </label>
       <label>
-        <span class="lbl">Docs, Sheets, Slides as</span>
+        <span class="lbl">Save Docs and Sheets as</span>
         <select id="export-format">
           <option value="office">Office formats</option>
           <option value="pdf">PDF</option>
@@ -241,7 +242,7 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
       </label>
       <label class="check">
         <input id="verify" type="checkbox">
-        <span>Verify checksums after writing</span>
+        <span>Check each file against Drive afterwards</span>
       </label>
     </div>
 
@@ -284,7 +285,7 @@ footer { margin-top: 48px; font-size: .85rem; color: var(--soft); }
 "use strict";
 
 /* ===========================================================================
-   CONFIGURATION — this is the only line you need to edit.
+   CONFIGURATION. This is the only line you need to edit.
    Create a Google API key (see README), enable the Drive API, and paste it
    between the quotes. Restrict the key to the Drive API and to your own
    domain as an HTTP referrer before publishing.
@@ -357,6 +358,8 @@ const S = {
   active: new Map(),
   rateLimitHits: 0,
   fallback: false,   // no File System Access API: save to Downloads instead
+  running: false,
+  stopReason: "",
 };
 
 /* ---------------------------------------------------------------- logging */
@@ -489,12 +492,12 @@ function explain(err) {
   if (err.status === 403 && err.reason === "downloadQuotaExceeded")
     return "Google has temporarily capped downloads on this file because too many people have downloaded it. Usually clears within a day.";
   if (err.status === 403 && err.reason === "cannotDownloadAbusiveFile")
-    return "Google flagged this file as abusive and refused to serve it.";
-  if (isRateLimited(err)) return "Google rate limit. Backing off and retrying.";
+    return "Google flagged this file as abusive and will not hand it over.";
+  if (isRateLimited(err)) return "Google is rate limiting us. Waiting a moment, then trying again.";
   if (err.status === 404) return "That file is no longer shared, or the link isn't public.";
   if (err.status === 401 || (err.status === 400 && /API key/i.test(err.message || "")) ||
       (err.status === 403 && /API key|not valid|blocked/i.test(err.message || "")))
-    return "The API key was rejected. Check that it is correct, that the Drive API is enabled for it, and that this domain is allowed as a referrer.";
+    return "Google rejected the API key. Check you copied it correctly, that the Drive API is switched on for it, and that this site is allowed in the key's restrictions.";
   if (err.status === 403) return "Access denied by Google" + (err.message ? ": " + err.message : "");
   return err.message;
 }
@@ -551,7 +554,7 @@ async function scanTree(rootId) {
   const meta = await apiJson("/files/" + encodeURIComponent(rootId),
     { fields: "id,name,mimeType", supportsAllDrives: "true" }, 4);
   if (meta.mimeType !== FOLDER_MIME) {
-    throw new DriveError(0, "notAFolder", "That link points to a file, not a folder. Paste a link to a Drive folder.");
+    throw new DriveError(0, "notAFolder", "That link points to a single file, not a folder. Paste the link to a Drive folder.");
   }
 
   S.rootName = safeName(meta.name);
@@ -621,13 +624,13 @@ function classify(entry) {
   const base = { id: entry.id, name: entry.name, mime: entry.mimeType, md5: entry.md5Checksum || null };
   if (NO_EXPORT[entry.mimeType]) {
     base.kind = "unsupported";
-    base.reason = NO_EXPORT[entry.mimeType] + " — Google provides no download format";
+    base.reason = "a " + NO_EXPORT[entry.mimeType] + ", which Google has no download format for";
     return base;
   }
   if (EXPORT_OFFICE[entry.mimeType]) { base.kind = "export"; base.size = null; return base; }
   if (entry.mimeType && entry.mimeType.indexOf("application/vnd.google-apps.") === 0) {
     base.kind = "unsupported";
-    base.reason = entry.mimeType + " — Google provides no download format";
+    base.reason = "a Google file type (" + entry.mimeType + ") with no download format";
     return base;
   }
   base.kind = "media";
@@ -641,7 +644,7 @@ function assignNames() {
   S.files = [];
 
   // `rel` is relative to the destination folder, which is already named after
-  // the Drive folder — so the root contributes no segment of its own.
+  // the Drive folder, so the root contributes no segment of its own.
   (function walk(node, rel) {
     const used = new Set();
     // Folders first, so a file can never take a folder's name.
@@ -748,7 +751,7 @@ function renderChildren(node, ul) {
     li.className = "file" + (f.kind === "unsupported" ? " skip" : "") +
       (firstFile && node.children.length ? " first" : "");
     firstFile = false;
-    li.textContent = f.name + (f.kind === "unsupported" ? " — " + f.reason : (f.size != null ? "  " + bytes(f.size) : ""));
+    li.textContent = f.name + (f.kind === "unsupported" ? ": " + f.reason : (f.size != null ? "  " + bytes(f.size) : ""));
     ul.appendChild(li);
   }
 }
@@ -889,7 +892,7 @@ function lowerConcurrency() {
   if (S.limit <= 1) return;
   S.limit = Math.max(1, Math.floor(S.limit / 2));
   UI.concurrency.value = String(S.limit);
-  log("rate limited — lowering concurrency to " + S.limit);
+  log("rate limited, lowering concurrency to " + S.limit);
 }
 
 function setActive(f, done, total) {
@@ -998,7 +1001,7 @@ async function downloadOne(f) {
           S.bytesDone += r2.value.length;
           if (counted > FALLBACK_MAX_BYTES) {
             try { await reader2.cancel(); } catch (e) {}
-            throw Object.assign(new Error("too large for this browser to hold in memory — use Chrome, Edge or Opera to write it straight to disk"), { name: "FatalError" });
+            throw Object.assign(new Error("too big for this browser to hold in memory. Chrome, Edge or Opera write it straight to disk instead"), { name: "FatalError" });
           }
           setActive(f, counted, f.size);
           paintProgress();
@@ -1040,7 +1043,7 @@ async function downloadOne(f) {
         const got = await md5OfFile(fileHandle);
         if (got !== f.md5) {
           await dirHandle.removeEntry(f.safe).catch(() => {});
-          return { status: "failed", reason: "checksum mismatch — file deleted", bytes: 0 };
+          return { status: "failed", reason: "the file that arrived does not match Drive, so it was deleted", bytes: 0 };
         }
         log("checksum ok: " + f.path.join("/"));
       }
@@ -1055,6 +1058,17 @@ async function downloadOne(f) {
       }
 
       if (S.cancelled || (err && err.name === "AbortError")) throw err;
+
+      // Out of disk space. Every remaining file would fail the same way, so stop
+      // the run rather than grinding through hundreds of identical errors.
+      // Only a real storage exception counts here: Google's own "download quota
+      // exceeded" is a different thing entirely and must not stop the run.
+      if (err && !(err instanceof DriveError) && err.name === "QuotaExceededError") {
+        S.stopReason = "The disk filled up. Free some space and run it again; finished files are skipped.";
+        S.cancelled = true;
+        if (S.abort) S.abort.abort();
+        return { status: "failed", reason: "ran out of disk space", bytes: 0 };
+      }
 
       if (err instanceof DriveError && err.status === 403 && err.reason === "cannotDownloadAbusiveFile" && !acknowledgeAbuse) {
         acknowledgeAbuse = true;
@@ -1125,15 +1139,16 @@ function finish() {
   const skipped = S.results.filter((r) => r.result.status === "skipped");
   const failed = S.results.filter((r) => r.result.status === "failed");
 
-  UI["summary-title"].textContent = S.cancelled ? "Cancelled" : (failed.length ? "Finished with failures" : "Finished");
+  UI["summary-title"].textContent = S.cancelled ? "Stopped" : (failed.length ? "Finished, with some failures" : "Finished");
 
   const lines = [];
+  if (S.stopReason) lines.push("<p class=\"status-bad\">" + escapeHtml(S.stopReason) + "</p>");
   lines.push("<p>" + plural(done.length, "file") + " downloaded" +
     (skipped.length ? ", " + skipped.length + " already on disk" : "") +
     (failed.length ? ", " + failed.length + " failed" : "") + ".</p>");
   if (failed.length) {
     lines.push("<ul>" + failed.slice(0, 200).map((r) =>
-      "<li>" + escapeHtml(r.file.path.join("/")) + " — " + escapeHtml(r.result.reason) + "</li>").join("") + "</ul>");
+      "<li>" + escapeHtml(r.file.path.join("/")) + ": " + escapeHtml(r.result.reason) + "</li>").join("") + "</ul>");
   }
   UI.report.innerHTML = lines.join("");
   UI["retry-btn"].hidden = failed.length === 0;
@@ -1142,7 +1157,7 @@ function finish() {
 
 function buildReportText() {
   const when = new Date().toISOString();
-  const out = ["GDrive Whole Folder Downloader — report", when, "Folder: " + S.rootName, ""];
+  const out = ["GDrive Whole Folder Downloader, download report", when, "Folder: " + S.rootName, ""];
   const by = { done: [], skipped: [], failed: [] };
   for (const r of S.results) by[r.result.status].push(r);
   out.push("Downloaded: " + by.done.length);
@@ -1153,7 +1168,7 @@ function buildReportText() {
     if (!by[group].length) continue;
     out.push("== " + group.toUpperCase() + " ==");
     for (const r of by[group]) {
-      out.push(r.file.path.join("/") + (r.result.reason ? "  — " + r.result.reason : ""));
+      out.push(r.file.path.join("/") + (r.result.reason ? "  " + r.result.reason : ""));
     }
     out.push("");
   }
@@ -1166,10 +1181,10 @@ function describeDestination() {
   if (S.fallback || !window.showDirectoryPicker) {
     UI["download-btn"].textContent = "Download to this device";
     UI["dest-note"].textContent =
-      "This browser cannot create folders, so files are saved one at a time to your Downloads " +
-      "folder, each named like “" + S.rootName + "_subfolder_file.jpg”. The structure is in the " +
-      "filenames. Your browser will ask once whether to allow multiple downloads — say yes, or only " +
-      "the first file arrives. A re-run starts over rather than resuming.";
+      "This browser cannot make folders, so files go to your Downloads folder one at a time, " +
+      "named like “" + S.rootName + "_subfolder_file.jpg”. Your browser will ask once whether to " +
+      "allow multiple downloads. Say yes, or only the first file arrives. Running it again starts " +
+      "from the beginning instead of picking up where it left off.";
   } else {
     UI["download-btn"].textContent = "Choose destination and download";
     UI["dest-note"].textContent =
@@ -1188,13 +1203,19 @@ UI["scan-form"].addEventListener("submit", async function (e) {
   e.preventDefault();
   const id = parseFolderId(UI.link.value);
   if (!id) {
-    setScanMsg("Expected a Drive folder link such as https://drive.google.com/drive/folders/ABC123, or the folder ID on its own.", "bad");
+    setScanMsg("That does not look like a Drive folder link. It should look like https://drive.google.com/drive/folders/ABC123, or you can paste just the folder ID.", "bad");
     return;
   }
   if (!isConfigured()) {
-    setScanMsg("Add your Google API key first — the box below has the steps.", "warn");
+    setScanMsg("Add your Google API key first. The box below has the steps.", "warn");
     return;
   }
+
+  if (S.running) {
+    setScanMsg("A download is still running. Cancel it first, or let it finish.", "warn");
+    return;
+  }
+  if (S.abort) S.abort.abort(); // drop any scan still in flight
 
   UI["scan-btn"].disabled = true;
   UI.review.hidden = true;
@@ -1237,6 +1258,7 @@ async function startDownload(files) {
   S.paused = false;
   S.abort = new AbortController();
   S.results = [];
+  S.stopReason = "";
   S.bytesDone = 0;
   S.bytesTotal = files.reduce((n, f) => n + (f.size || 0), 0);
   S.totalFiles = files.length;
@@ -1252,22 +1274,38 @@ async function startDownload(files) {
   } else if (!DRYRUN) {
     try {
       const picked = await window.showDirectoryPicker({ mode: "readwrite" });
+      // The handle can come back read-only, or lose permission after idling.
+      if (picked.queryPermission) {
+        let state = await picked.queryPermission({ mode: "readwrite" });
+        if (state !== "granted" && picked.requestPermission) {
+          state = await picked.requestPermission({ mode: "readwrite" });
+        }
+        if (state !== "granted") {
+          setScanMsg("That folder was not granted write access, so nothing can be saved there. Pick it again and allow access.", "bad");
+          return;
+        }
+      }
       S.dir = await picked.getDirectoryHandle(S.rootName, { create: true });
       S.dirCache = new Map();
     } catch (err) {
       if (err && err.name === "AbortError") return; // picker dismissed
-      setScanMsg("Could not use that folder: " + (err.message || err), "bad");
+      setScanMsg("Could not use that folder. " + (err.message || err), "bad");
       return;
     }
   }
 
+  S.running = true;
   UI.summary.hidden = true;
   UI.progress.hidden = false;
   setPaused(false);
   paintProgress();
   UI.progress.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
-  await runQueue(files);
+  try {
+    await runQueue(files);
+  } finally {
+    S.running = false;
+  }
   finish();
 }
 
@@ -1284,7 +1322,7 @@ UI["report-btn"].addEventListener("click", function () {
   const blob = new Blob([buildReportText()], { type: "text/plain" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = S.rootName + " — download report.txt";
+  a.download = S.rootName + " download report.txt";
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 30000);
 });
@@ -1302,7 +1340,7 @@ function refreshConfigNotice() {
   UI.unconfigured.hidden = isConfigured();
   if (!isConfigured()) {
     UI.unconfigured.textContent =
-      "Add a Google API key below to start. The steps take about two minutes.";
+      "Add a Google API key below to get started. It takes about two minutes.";
   }
 }
 
@@ -1322,10 +1360,24 @@ function refreshConfigNotice() {
     UI.gate.hidden = false;
     UI.gate.className = "notice";
     UI.gate.textContent =
-      "This browser cannot save into a folder you choose, so files go to your Downloads folder " +
-      "one at a time, with the folder path in each filename. Chrome, Edge and Opera rebuild the " +
-      "folders on disk instead.";
+      "This browser cannot save into a folder you pick, so files go to your Downloads folder " +
+      "one at a time, with the folder path in each name. Chrome, Edge and Opera keep your folders " +
+      "as they are in Drive.";
   }
+
+  // Closing the tab mid-run leaves half-written files behind.
+  window.addEventListener("beforeunload", function (e) {
+    if (!S.running) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+  window.addEventListener("error", function (e) {
+    log("uncaught error: " + (e.message || e.error));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    log("unhandled rejection: " + ((e.reason && e.reason.message) || e.reason));
+  });
 
   if (DEBUG) UI["log-section"].hidden = false;
   if (DRYRUN) log("dry run: requests are made, nothing is written to disk");

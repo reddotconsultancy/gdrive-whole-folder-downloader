@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+
+# Keep the single-file app out of language stats skew and diff noise.
+index.html linguist-detectable=true

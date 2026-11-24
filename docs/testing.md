@@ -1,13 +1,13 @@
-# Testing
+# Test plan
 
 A concrete plan for checking this actually works. Tick items as you go; each one says
 what you should see.
 
 Two flags are built into the page:
 
-- `?debug=1` — verbose console logging of every API call, retry and skip decision, plus
+- `?debug=1`: verbose console logging of every API call, retry and skip decision, plus
   a log panel at the bottom of the page.
-- `?dryrun=1` — runs the full scan and the full download loop, makes the real requests
+- `?dryrun=1`: runs the full scan and the full download loop, makes the real requests
   to Google, and writes nothing to disk. Use it to exercise flow and error handling
   without moving data. Combine them: `?debug=1&dryrun=1`.
 
@@ -15,81 +15,81 @@ Two flags are built into the page:
 
 ## Link parsing
 
-- [ ] `https://drive.google.com/drive/folders/<ID>` — scans.
-- [ ] `https://drive.google.com/drive/u/2/folders/<ID>` — scans.
-- [ ] `https://drive.google.com/drive/folders/<ID>?usp=sharing` — scans; the query is ignored.
-- [ ] `https://drive.google.com/open?id=<ID>` — scans.
-- [ ] A bare `<ID>` pasted on its own — scans.
-- [ ] A link to a *file* rather than a folder — "That link points to a file, not a folder."
-- [ ] `hello world` — the message names the expected format. No request is made.
+- [ ] `https://drive.google.com/drive/folders/<ID>`: scans.
+- [ ] `https://drive.google.com/drive/u/2/folders/<ID>`: scans.
+- [ ] `https://drive.google.com/drive/folders/<ID>?usp=sharing`: scans; the query is ignored.
+- [ ] `https://drive.google.com/open?id=<ID>`: scans.
+- [ ] A bare `<ID>` pasted on its own: scans.
+- [ ] A link to a *file* rather than a folder: "That link points to a single file, not a folder."
+- [ ] `hello world`: the message names the expected format. No request is made.
 
 ## Scanning
 
-- [ ] **Empty folder** — scan completes, 0 files, download button disabled.
-- [ ] **Flat folder, ~10 files** — count and total size match what Drive shows.
-- [ ] **Deeply nested, 5+ levels** — the tree expands to the deepest level; folders
+- [ ] **Empty folder**: scan completes, 0 files, download button disabled.
+- [ ] **Flat folder, ~10 files**: count and total size match what Drive shows.
+- [ ] **Deeply nested, 5+ levels**: the tree expands to the deepest level; folders
       render their children the first time you open them.
-- [ ] **More than 1000 children in one folder** — all of them appear. With `?debug=1`
+- [ ] **More than 1000 children in one folder**: all of them appear. With `?debug=1`
       the log shows `paging ... (1000 so far)`, proving `nextPageToken` was followed.
-- [ ] **Folder containing shortcuts** — the shortcut's own name is used, and the
+- [ ] **Folder containing shortcuts**: the shortcut's own name is used, and the
       target's bytes are downloaded.
-- [ ] **A shortcut pointing at an ancestor folder** — scan finishes rather than looping.
+- [ ] **A shortcut pointing at an ancestor folder**: scan finishes rather than looping.
       With `?debug=1` the log shows `skipping shortcut loop at ...`.
-- [ ] **Two files with the identical name in one folder** — both appear; on disk the
+- [ ] **Two files with the identical name in one folder**: both appear; on disk the
       second becomes `name (2).ext`. Open both: contents differ.
-- [ ] **Names containing `/ : ? *`, emoji, and non-Latin scripts** — illegal characters
+- [ ] **Names containing `/ : ? *`, emoji, and non-Latin scripts**: illegal characters
       become `_`; emoji and non-Latin characters survive unchanged.
-- [ ] **A private folder** — "Not found" style message explaining the folder must be
+- [ ] **A private folder**: "Not found" style message explaining the folder must be
       shared with anyone who has the link. No crash, no blank screen.
-- [ ] **A deleted or unshared link** — same: a clear message, not a stack trace.
+- [ ] **A deleted or unshared link**: same: a clear message, not a stack trace.
 
 ## Downloading
 
-- [ ] **A Google Doc, Sheet, Slide and Drawing** — arrive as `.docx`, `.xlsx`, `.pptx`,
+- [ ] **A Google Doc, Sheet, Slide and Drawing**: arrive as `.docx`, `.xlsx`, `.pptx`,
       `.png` and open correctly in Word/Excel/PowerPoint or an image viewer.
-- [ ] **The same four with "Docs, Sheets, Slides as" set to PDF** — all arrive as `.pdf`.
-- [ ] **A file over 2GB** — downloads as a single file. Watch the tab in Task Manager
+- [ ] **The same four with "Docs, Sheets, Slides as" set to PDF**: all arrive as `.pdf`.
+- [ ] **A file over 2GB**: downloads as a single file. Watch the tab in Task Manager
       (Shift+Esc in Chrome): memory stays flat, it does not climb toward the file size.
-- [ ] **A 20GB+ folder** — finishes; tab memory stays flat throughout, proving nothing
+- [ ] **A 20GB+ folder**: finishes; tab memory stays flat throughout, proving nothing
       is buffered.
-- [ ] **Cancel at roughly 50%, then run again against the same destination** — the
+- [ ] **Cancel at roughly 50%, then run again against the same destination**: the
       second run reports the finished files as "already on disk", re-downloads only what
       was missing, and produces no duplicates such as `file (2).ext`.
-- [ ] **Kill wifi mid-download, then restore it** — the partial file is deleted, the
+- [ ] **Kill wifi mid-download, then restore it**: the partial file is deleted, the
       file is retried, and it ends up complete. The debug log shows `attempt 1 failed`.
-- [ ] **DevTools → Network → throttle to Slow 3G** — downloads continue; the rate
+- [ ] **DevTools → Network → throttle to Slow 3G**: downloads continue; the rate
       readout drops but nothing fails outright.
-- [ ] **Concurrency set to 1** — exactly one file in the in-flight list at a time.
-- [ ] **Concurrency set to 10** — up to ten rows in the in-flight list.
-- [ ] **Pause, wait, Resume** — byte counter stops and restarts; no file is corrupted.
+- [ ] **Concurrency set to 1**: exactly one file in the in-flight list at a time.
+- [ ] **Concurrency set to 10**: up to ten rows in the in-flight list.
+- [ ] **Pause, wait, Resume**: byte counter stops and restarts; no file is corrupted.
 
 ## Errors
 
-- [ ] **A file Google has quota-capped** — that file is skipped with "Google has
+- [ ] **A file Google has quota-capped**: that file is skipped with "Google has
       temporarily capped downloads on this file…"; the rest of the run continues.
-- [ ] **A bad API key** — the message explains the key was rejected and what to check
+- [ ] **A bad API key**: the message explains the key was rejected and what to check
       (key correct, Drive API enabled, referrer allowed).
-- [ ] **No API key at all** — on load, a calm line says the app is not configured yet
+- [ ] **No API key at all**: on load, a calm line says the app is not configured yet
       and points at "Use your own API key". Scanning is refused before any request.
-- [ ] **Rate limiting under concurrency 10 on a large folder** — the concurrency box
+- [ ] **Rate limiting under concurrency 10 on a large folder**: the concurrency box
       drops on its own and the run continues. Visible in the debug log.
 
 ## Browser matrix
 
-- [ ] **Chrome** — full path works end to end.
-- [ ] **Edge** — full path works end to end.
-- [ ] **Safari** — on load, a note explains files will go to Downloads one at a time.
+- [ ] **Chrome**: full path works end to end.
+- [ ] **Edge**: full path works end to end.
+- [ ] **Safari**: on load, a note explains files will go to Downloads one at a time.
       Scanning works, the download button is enabled, and the button reads "Download to
       this device".
-- [ ] **Firefox** — same as Safari.
-- [ ] **Safari or Firefox, full run** — every file arrives in Downloads, named like
+- [ ] **Firefox**: same as Safari.
+- [ ] **Safari or Firefox, full run**: every file arrives in Downloads, named like
       `Root_subfolder_file.ext` with no `/` in the name. The browser asks once to allow
       multiple downloads; allow it. Count the files: none are missing.
-- [ ] **A browser on a phone** — same fallback path; the app does not dead-end.
-- [ ] **A file over 2GB in fallback mode** — reported as too large for that browser,
+- [ ] **A browser on a phone**: same fallback path; the app does not dead-end.
+- [ ] **A file over 2GB in fallback mode**: reported as too large for that browser,
       with the suggestion to use Chrome, Edge or Opera. The run continues.
-- [ ] **Served from `https://` GitHub Pages** — works, including the folder picker.
-- [ ] **Opened locally as `file://`** — works. `file://` counts as a secure context in
+- [ ] **Served from `https://` GitHub Pages**: works, including the folder picker.
+- [ ] **Opened locally as `file://`**: works. `file://` counts as a secure context in
       Chrome, so the folder picker is available. Note that if the browser blocks site
       data on `file://`, the "Remember in this browser" checkbox has nothing to write to;
       the app handles that and carries on.
@@ -98,11 +98,11 @@ Two flags are built into the page:
 
 - [ ] File count on disk equals the scanned count minus skips and failures. On
       macOS/Linux: `find <dest> -type f | wc -l`.
-- [ ] Spot-check three nested paths against Drive in the browser — same folders, same
+- [ ] Spot-check three nested paths against Drive in the browser: same folders, same
       names, same nesting.
 - [ ] Total bytes on disk matches the reported total. `du -sb <dest>` on Linux,
       `du -sh` on macOS.
-- [ ] Run a small folder with **Verify checksums after writing** ticked — zero
+- [ ] Run a small folder with **Check each file against Drive afterwards** ticked: zero
       mismatches reported. (This re-reads every byte from disk, so it is slow on large
       folders. A mismatch deletes the file and reports it rather than keeping bad data.)
 
@@ -118,8 +118,8 @@ writing anything.
 
 **Reading the failure report.** After a run, "Download report" saves a `.txt` listing
 every file grouped into FAILED, SKIPPED and DONE, each failure with its reason. The
-reasons are the real Google error translated into plain English — "no longer shared"
-means a 404, "temporarily capped" means `downloadQuotaExceeded`.
+reasons are the real Google error put into plain English: "no longer shared" means a
+404, and "temporarily capped" means `downloadQuotaExceeded`.
 
 **The three most likely causes of a silent failure:**
 
